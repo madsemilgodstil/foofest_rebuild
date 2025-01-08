@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import useLikedBandsStore from "@/stores/likedBandsStore";
+import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
 
+// Function to convert short day names to full day names
 function getFullDayName(shortDay) {
   const days = {
     mon: "Monday",
@@ -19,20 +22,32 @@ function getFullDayName(shortDay) {
     sat: "Saturday",
     sun: "Sunday",
   };
-  return days[shortDay] || shortDay;
+  return days[shortDay] || shortDay; // Return original input if the day is not found
 }
 
-export default function BandSlider({
-  band,
-  bandSchedule,
-  toggleLike,
-  isLiked,
-}) {
+export default function BandSlider({ band, bandSchedule }) {
+  const { likedBands, addBand, removeBand } = useLikedBandsStore(); // Zustand hooks
+  const { isLoggedIn } = useAuth(); // Get login status from AuthContext
+
   const imageUrl = band?.logo
     ? band.logo.startsWith("https://")
       ? band.logo
       : `${process.env.NEXT_PUBLIC_API_URL || ""}/logos/${band.logo}`
     : null;
+
+  // Check if the band is liked
+  const isBandLiked = likedBands.some(
+    (likedBand) => likedBand.slug === band.slug
+  );
+
+  // Function to toggle like
+  const toggleLike = () => {
+    if (!isLoggedIn) {
+      alert("You must be logged in to like this band!"); // Notify user if not logged in
+      return;
+    }
+    isBandLiked ? removeBand(band.slug) : addBand(band);
+  };
 
   return (
     <SheetContent
@@ -43,13 +58,31 @@ export default function BandSlider({
         <SheetTitle className="text-4xl font-bold text-primary">
           {band?.name || "No Band Selected"}
         </SheetTitle>
-        <SheetDescription className="text-gray-400">
+
+        {/* Like button below the title */}
+        <button
+          onClick={toggleLike}
+          className={`mt-4 w-10 h-10 flex items-center justify-center rounded-full border-2 bg-black ${
+            isBandLiked
+              ? "text-primary border-orange"
+              : "text-primary border-darkorange hover:border-orange"
+          } transition duration-200`}
+        >
+          {isBandLiked ? (
+            <AiFillHeart size={20} />
+          ) : (
+            <AiOutlineHeart size={20} />
+          )}
+        </button>
+
+        <SheetDescription className="mt-4 text-gray-400">
           Scroll for more information
         </SheetDescription>
       </SheetHeader>
 
       <div className="flex-1 mt-4 space-y-4 overflow-y-auto">
-        <div className="flex justify-center py-4">
+        {/* Band image */}
+        <div className="py-4">
           {imageUrl ? (
             <Avatar className="w-48 h-48">
               <AvatarImage src={imageUrl} alt={band?.name || "Band"} />
@@ -59,36 +92,34 @@ export default function BandSlider({
             <div>No image available</div>
           )}
         </div>
-        {/* Like button */}
-        <button
-          onClick={toggleLike}
-          className={`w-full py-2 mt-4 text-center rounded ${
-            isLiked ? "bg-red-500 text-white" : "bg-gray-300 text-black"
-          }`}
-        >
-          {isLiked ? <AiFillHeart size={20} /> : <AiOutlineHeart size={20} />}
-          {isLiked ? " Unlike" : " Like"}
-        </button>
+
+        {/* Band description */}
         <div className="my-2 text-lg">
           {band?.bio || "Biography not available."}
         </div>
+
+        {/* Genre */}
         <div className="font-semibold text-white">
-          <h3 className="inline-flex mb-2 text-sm font-bold text-primary">
-            Genre:
+          <h3 className="mb-2 text-sm font-bold text-primary">
+            Genre:{" "}
             <span className="ml-1 text-sm text-gray-300">{band?.genre}</span>
           </h3>
         </div>
+
+        {/* Members */}
         <div className="font-semibold text-white">
-          <h3 className="inline-flex mb-2 text-sm font-bold text-primary">
-            Members:
+          <h3 className="mb-2 text-sm font-bold text-primary">
+            Members:{" "}
             <span className="ml-1 text-sm text-gray-300">
               {band?.members?.join(", ") || "No members listed"}
             </span>
           </h3>
         </div>
+
+        {/* Schedule */}
         <div className="font-semibold text-white">
-          <h3 className="inline-flex items-center mb-2 text-sm font-bold text-primary">
-            Schedule:
+          <h3 className="mb-2 text-sm font-bold text-primary">
+            Schedule:{" "}
             {bandSchedule?.length > 0 ? (
               <span className="ml-1 text-sm text-gray-300">
                 {bandSchedule.map((slot, index) => (

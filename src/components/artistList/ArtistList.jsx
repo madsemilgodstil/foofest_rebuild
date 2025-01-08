@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext"; // Import Auth Context
 import useLikedBandsStore from "@/stores/likedBandsStore";
 import BandSlider from "@/components/bandSlider/BandSlider";
 import {
@@ -26,6 +27,7 @@ function getImageUrl(band) {
 const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
   const { likedBands, addBand, removeBand, loadLikedBands } =
     useLikedBandsStore();
+  const { isLoggedIn } = useAuth(); // Get isLoggedIn from AuthContext
 
   useEffect(() => {
     loadLikedBands(); // Load liked bands from localStorage
@@ -100,24 +102,26 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
                             No image available
                           </div>
                         )}
-                        {/* Like icon */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleLike(band);
-                          }}
-                          className={`absolute top-2 right-2 w-10 h-10 flex items-center justify-center rounded-full border-2 bg-black ${
-                            isLiked
-                              ? "text-primary border-orange"
-                              : "text-primary border-darkorange hover:border-orange"
-                          } transition duration-200`}
-                        >
-                          {isLiked ? (
-                            <AiFillHeart size={20} />
-                          ) : (
-                            <AiOutlineHeart size={20} />
-                          )}
-                        </button>
+                        {/* Conditionally render the like button */}
+                        {isLoggedIn && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleLike(band);
+                            }}
+                            className={`absolute top-2 right-2 w-10 h-10 flex items-center justify-center rounded-full border-2 bg-black ${
+                              isLiked
+                                ? "text-primary border-orange"
+                                : "text-primary border-darkorange hover:border-orange"
+                            } transition duration-200`}
+                          >
+                            {isLiked ? (
+                              <AiFillHeart size={20} />
+                            ) : (
+                              <AiOutlineHeart size={20} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </CardContent>
                     <CardHeader className="py-4">

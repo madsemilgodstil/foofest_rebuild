@@ -1,3 +1,5 @@
+"use client";
+
 import {
   SheetContent,
   SheetHeader,
@@ -5,8 +7,8 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 
-// Funktion til at konvertere korte ugedagsnavne til fulde navne
 function getFullDayName(shortDay) {
   const days = {
     mon: "Monday",
@@ -17,17 +19,15 @@ function getFullDayName(shortDay) {
     sat: "Saturday",
     sun: "Sunday",
   };
-  return days[shortDay] || shortDay; // Hvis dagen ikke findes, returneres det originale input
+  return days[shortDay] || shortDay;
 }
 
-// function getImageUrl(band) {
-//   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
-//   return band.logo?.startsWith("https://")
-//     ? band.logo
-//     : `${baseUrl}/logos/${band.logo}`;
-// }
-
-export default function BandSlider({ band, bandSchedule }) {
+export default function BandSlider({
+  band,
+  bandSchedule,
+  toggleLike,
+  isLiked,
+}) {
   const imageUrl = band?.logo
     ? band.logo.startsWith("https://")
       ? band.logo
@@ -59,6 +59,16 @@ export default function BandSlider({ band, bandSchedule }) {
             <div>No image available</div>
           )}
         </div>
+        {/* Like button */}
+        <button
+          onClick={toggleLike}
+          className={`w-full py-2 mt-4 text-center rounded ${
+            isLiked ? "bg-red-500 text-white" : "bg-gray-300 text-black"
+          }`}
+        >
+          {isLiked ? <AiFillHeart size={20} /> : <AiOutlineHeart size={20} />}
+          {isLiked ? " Unlike" : " Like"}
+        </button>
         <div className="my-2 text-lg">
           {band?.bio || "Biography not available."}
         </div>

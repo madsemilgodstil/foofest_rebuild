@@ -28,10 +28,9 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
     useLikedBandsStore();
 
   useEffect(() => {
-    loadLikedBands(); // Hent liked bands fra localStorage
+    loadLikedBands(); // Load liked bands from localStorage
   }, [loadLikedBands]);
 
-  // Filtrer bands hvis kun likede bands skal vises
   const filteredBands = onlyLiked ? likedBands : bands;
 
   const isBandLiked = (slug) => likedBands.some((band) => band.slug === slug);
@@ -101,7 +100,7 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
                             No image available
                           </div>
                         )}
-                        {/* Like ikon */}
+                        {/* Like icon */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -131,7 +130,12 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
                     </CardHeader>
                   </Card>
                 </SheetTrigger>
-                <BandSlider band={band} bandSchedule={bandSchedule} />
+                <BandSlider
+                  band={band}
+                  bandSchedule={bandSchedule}
+                  toggleLike={() => toggleLike(band)}
+                  isLiked={isLiked}
+                />
               </Sheet>
             );
           })}

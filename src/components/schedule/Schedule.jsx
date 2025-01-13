@@ -1,78 +1,86 @@
-"use client";
+"use client"; // Angiver, at komponenten kører på klient-siden (Next.js).
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
-import BandSlider from "@/components/bandSlider/BandSlider";
+import { useState } from "react"; // Importerer useState til håndtering af lokal tilstand.
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Importerer UI-komponenter til visning af kort.
+import { Sheet, SheetTrigger } from "@/components/ui/sheet"; // Importerer komponenter til "sheet"-layout.
+import BandSlider from "@/components/bandSlider/BandSlider"; // Importerer en komponent til visning af banddetaljer.
 
 const Schedule = ({ stages, bands }) => {
-  const [selectedGenre, setSelectedGenre] = useState(null);
-  const [selectedStage, setSelectedStage] = useState(null);
-  const [selectedBand, setSelectedBand] = useState(null);
+  // Lokal tilstand til filtre og valgte elementer
+  const [selectedGenre, setSelectedGenre] = useState(null); // Valgt genre
+  const [selectedStage, setSelectedStage] = useState(null); // Valgt scene
+  const [selectedBand, setSelectedBand] = useState(null); // Valgt band
 
+  // Udleder alle dage fra sceneplanen
   const allDays = [
     ...new Set(
-      stages.flatMap(({ stageSchedule }) => Object.keys(stageSchedule))
+      stages.flatMap(({ stageSchedule }) => Object.keys(stageSchedule)) // Samler unikke dage fra alle scener.
     ),
   ];
 
+  // Udleder alle unikke genrer fra sceneplanen
   const allGenres = [
     ...new Set(
       stages.flatMap(({ stageSchedule }) =>
-        Object.values(stageSchedule).flatMap((day) =>
-          day
-            .map(({ genre }) => genre)
-            .filter((genre) => genre && genre !== "Unknown")
+        Object.values(stageSchedule).flatMap(
+          (day) =>
+            day
+              .map(({ genre }) => genre) // Henter genrer fra hvert event
+              .filter((genre) => genre && genre !== "Unknown") // Filtrerer ukendte genrer fra
         )
       )
     ),
   ];
 
+  // Håndterer klik på en scene i filteret
   const handleStageFilter = (stageName) => {
-    setSelectedStage(stageName === selectedStage ? null : stageName);
+    setSelectedStage(stageName === selectedStage ? null : stageName); // Toggler scenen som valgt/ikke valgt.
   };
 
+  // Håndterer klik på en genre i filteret
   const handleGenreFilter = (genre) => {
-    setSelectedGenre(genre === selectedGenre ? null : genre);
+    setSelectedGenre(genre === selectedGenre ? null : genre); // Toggler genren som valgt/ikke valgt.
   };
 
+  // Ruller til en bestemt dag i oversigten
   const scrollToDay = (day) => {
-    const element = document.getElementById(day);
+    const element = document.getElementById(day); // Finder elementet for dagen.
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      element.scrollIntoView({ behavior: "smooth" }); // Glat rulning til elementet.
     }
   };
 
+  // Håndterer klik på et bandkort
   const handleBandClick = (event, stage, day) => {
     console.log("Selected event:", event, "Stage:", stage, "Day:", day);
 
-    // Find band fra bands-listen baseret på event.act
+    // Finder det valgte band fra bands-listen baseret på eventets navn
     const matchedBand = bands.find(
       (band) =>
         band.name.toLowerCase().trim() === event.act.toLowerCase().trim()
     );
 
     if (matchedBand) {
-      // Kombiner band-data med event-detaljer og tilføj stage og day
+      // Kombinerer banddata med eventdetaljer
       setSelectedBand({
         ...matchedBand,
         schedule: [{ ...event, stage, day }],
       });
       console.log("Matched Band:", matchedBand);
     } else {
-      console.error("No band matched for:", event.act);
+      console.error("No band matched for:", event.act); // Logger fejl, hvis bandet ikke findes.
     }
   };
 
   return (
     <div className="mx-4 lg:mx-24">
-      <div className="gap-6 mb-20 mt-7 ">
-        {/* Stage filter */}
+      <div className="gap-6 mb-20 mt-7">
+        {/* Filter for scener */}
         <div className="flex flex-wrap justify-center gap-3 mb-8 font-oswald">
           {stages.map(({ name }) => (
             <button
               key={name}
-              onClick={() => handleStageFilter(name)}
+              onClick={() => handleStageFilter(name)} // Toggler scenefilteret
               className={`px-6 py-2 rounded-full border ${
                 selectedStage === name
                   ? "bg-primary text-white border-primary"
@@ -84,25 +92,26 @@ const Schedule = ({ stages, bands }) => {
           ))}
         </div>
 
-        {/* Day filter */}
+        {/* Filter for dage */}
         <div className="flex flex-wrap justify-center gap-3 mb-8 font-oswald">
           {allDays.map((day) => (
             <button
               key={day}
-              onClick={() => scrollToDay(day)}
+              onClick={() => scrollToDay(day)} // Ruller til den valgte dag
               className="px-6 py-2 text-white transition duration-200 ease-out border rounded-full bg-primary hover:bg-black border-primary"
             >
-              {day.charAt(0).toUpperCase() + day.slice(1)}
+              {day.charAt(0).toUpperCase() + day.slice(1)}{" "}
+              {/* Formaterer dagen */}
             </button>
           ))}
         </div>
 
-        {/* Genre filter */}
+        {/* Filter for genrer */}
         <div className="flex flex-wrap justify-center gap-3 mt-6 font-oswald">
           {allGenres.map((genre) => (
             <button
               key={genre}
-              onClick={() => handleGenreFilter(genre)}
+              onClick={() => handleGenreFilter(genre)} // Toggler genrefilteret
               className={`px-6 py-2 rounded-full border ${
                 selectedGenre === genre
                   ? "bg-primary text-white border-primary"
@@ -115,6 +124,7 @@ const Schedule = ({ stages, bands }) => {
         </div>
       </div>
 
+      {/* Oversigt over scener */}
       <div
         className={`${
           selectedStage
@@ -123,7 +133,7 @@ const Schedule = ({ stages, bands }) => {
         }`}
       >
         {stages
-          .filter(({ name }) => !selectedStage || selectedStage === name)
+          .filter(({ name }) => !selectedStage || selectedStage === name) // Filtrerer scener baseret på valget
           .map(({ name, stageSchedule }) => (
             <div
               key={name}
@@ -137,7 +147,7 @@ const Schedule = ({ stages, bands }) => {
               {Object.keys(stageSchedule).map((day) => {
                 const filteredEvents = stageSchedule[day]?.filter(
                   ({ genre }) =>
-                    (!selectedGenre || genre === selectedGenre) &&
+                    (!selectedGenre || genre === selectedGenre) && // Filtrerer events baseret på genre
                     genre !== "Unknown"
                 );
 
@@ -155,7 +165,7 @@ const Schedule = ({ stages, bands }) => {
                         <Sheet key={index}>
                           <SheetTrigger asChild>
                             <Card
-                              onClick={() => handleBandClick(event, name, day)}
+                              onClick={() => handleBandClick(event, name, day)} // Åbner banddetaljer
                               className={`hover:scale-[1.03] transition ease-in-out duration-300 border rounded-[10px] cursor-pointer ${
                                 event.cancelled
                                   ? "bg-red-900 border-red-500 text-white"

@@ -15,10 +15,9 @@ import { getSchedule, getBands } from '@/lib/database'
 
 export default function LoginPage () {
   const [activeComponent, setActiveComponent] = useState('UserSettings')
-  const [isLoggedIn, setIsLoggedIn] = useState(true) // Replace with actual auth logic
+  const [isLoggedIn, setIsLoggedIn] = useState(true)
   const [stages, setStages] = useState([])
 
-  // Fetch liked artists when the menu item is clicked
   const fetchLikedArtists = async () => {
     try {
       const [midgard, vanaheim, jotunheim, allBands] = await Promise.all([
@@ -53,9 +52,7 @@ export default function LoginPage () {
         { name: 'Jotunheim', stageSchedule: mapGenresToSchedule(jotunheim) }
       ]
       setStages(stageData)
-    } catch (error) {
-      // Error handling removed as requested
-    }
+    } catch (error) {}
   }
 
   const renderComponent = () => {

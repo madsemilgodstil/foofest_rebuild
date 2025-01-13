@@ -1,53 +1,58 @@
+// URL til API'et. Værdien hentes fra miljøvariablerne i Next.js
 const url = process.env.NEXT_PUBLIC_API_URL
 
+// Standard headers, der bruges i flere fetch-anmodninger
 const headersList = {
-  Accept: '/',
-  'Content-Type': 'application/json',
-  Prefer: 'return=representation'
+  Accept: '/', // Angiver, hvilke formater serveren kan returnere
+  'Content-Type': 'application/json', // Angiver, at vi sender JSON-data
+  Prefer: 'return=representation' // Beder serveren returnere den opdaterede repræsentation af data
 }
 
-//Get
+// GET: Henter alle bands fra API'et
 export async function getBands () {
   const response = await fetch(url + '/bands', {
-    method: 'GET',
-    headers: headersList
+    method: 'GET', // Angiver HTTP-metoden
+    headers: headersList // Sender standardheadersne med
   })
 
-  const data = await response.json()
-  return data
+  const data = await response.json() // Konverterer svaret til JSON
+  return data // Returnerer de hentede bands
 }
 
-//GET Schedule for stages
+// GET: Henter skemaet for en bestemt scene
 export async function getSchedule (stage) {
   const response = await fetch(`${url}/schedule`, {
-    method: 'GET',
-    headers: headersList
+    method: 'GET', // Angiver HTTP-metoden
+    headers: headersList // Sender standardheadersne med
   })
 
-  const data = await response.json()
+  const data = await response.json() // Konverterer svaret til JSON
 
-  return data[stage]
+  return data[stage] // Returnerer skemaet for den ønskede scene
 }
 
-// Fetch Schedule
+// GET: Henter hele skemaet (brugt til en slider eller overordnet visning)
 export async function getScheduleSlider () {
   try {
     const response = await fetch(`${url}/schedule`, {
       method: 'GET',
       headers: headersList
     })
+
+    // Tjekker om anmodningen var succesfuld
     if (!response.ok) {
       throw new Error(`Failed to fetch schedule: ${response.status}`)
     }
+
     const data = await response.json()
-    return data || {}
+    return data || {} // Returnerer skemaet eller en tom objekt, hvis der ikke er noget data
   } catch (error) {
     console.error('Error fetching schedule:', error)
-    return {} // Return an empty object on failure
+    return {} // Returnerer en tom objekt, hvis der opstod en fejl
   }
 }
 
-// GET Campingområder
+// GET: Henter data om campingområder og tilgængelige pladser
 export async function getCampingAreas () {
   const response = await fetch(`${url}/available-spots`, {
     method: 'GET',
@@ -56,48 +61,51 @@ export async function getCampingAreas () {
       'Content-Type': 'application/json'
     }
   })
-  const data = await response.json()
-  return data
+  const data = await response.json() // Konverterer svaret til JSON
+  return data // Returnerer de tilgængelige campingområder
 }
 
-//PUT
+// PUT: Reserverer en campingplads
 export async function reserveSpot (area, totalTents) {
+  // Opretter kroppen til anmodningen som JSON
   const bodyContent = JSON.stringify({
-    area: area,
-    amount: totalTents
+    area: area, // Navnet på campingområdet
+    amount: totalTents // Antal telte, der skal reserveres
   })
 
   const response = await fetch(`${url}/reserve-spot`, {
-    method: 'PUT',
+    method: 'PUT', // PUT bruges til at opdatere eller reservere ressourcer
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     },
-    body: bodyContent
+    body: bodyContent // Sender kroppen med data til reservationen
   })
 
   const data = await response.json()
 
   return {
-    id: data.id,
-    timeout: data.timeout
+    id: data.id, // ID for reservationen
+    timeout: data.timeout // Timeout-værdi for, hvor længe reservationen er gyldig
   }
 }
 
-// POST Fuldfør reservation
+// POST: Fuldfører en eksisterende reservation baseret på dens ID
 export async function fullfillReservation (reservationId) {
+  // Opretter kroppen til anmodningen som JSON
   const bodyContent = JSON.stringify({
-    id: reservationId
+    id: reservationId // ID for den reservation, der skal fuldføres
   })
+
   const response = await fetch(`${url}/fullfill-reservation`, {
-    method: 'POST',
+    method: 'POST', // POST bruges til at fuldføre eller indsende data
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     },
-    body: bodyContent
+    body: bodyContent // Sender kroppen med reservationens ID
   })
 
-  const data = await response.json()
-  return data
+  const data = await response.json() // Konverterer svaret til JSON
+  return data // Returnerer dataen fra serveren (f.eks. bekræftelse på fuldførelse)
 }

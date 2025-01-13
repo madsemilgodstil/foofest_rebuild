@@ -1,40 +1,43 @@
-const url = process.env.NEXT_PUBLIC_USER_API_URL
-const api = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const auth = `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+// Henter API-URL og nøgle fra miljøvariablerne
+const url = process.env.NEXT_PUBLIC_USER_API_URL // Base-URL for bruger-API
+const api = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY // Supabase API-nøgle
+const auth = `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` // Autorisation header med API-nøglen
 
+// Standard headers til alle fetch-anmodninger
 const headersList = {
-  Accept: 'application/json',
-  'Content-Type': 'application/json',
-  Prefer: 'return=representation',
-  apikey: api,
-  Authorization: auth
+  Accept: 'application/json', // Accepter JSON-format
+  'Content-Type': 'application/json', // Angiver at vi sender JSON
+  Prefer: 'return=representation', // Beder om at få returneret repræsentationen af opdaterede data
+  apikey: api, // API-nøgle til Supabase
+  Authorization: auth // Autorisation med "Bearer" token
 }
 
-// Fetch all users
+// GET: Henter alle brugere
 export async function getUsers () {
   try {
     const response = await fetch(url, {
-      method: 'GET',
-      headers: headersList
+      method: 'GET', // HTTP GET-metode
+      headers: headersList // Bruger standardheaders
     })
 
+    // Tjekker om anmodningen var succesfuld
     if (!response.ok) {
       throw new Error(`Failed to fetch users: ${response.statusText}`)
     }
 
-    const data = await response.json()
-    return data
+    const data = await response.json() // Konverterer svaret til JSON
+    return data // Returnerer listen af brugere
   } catch (error) {
     console.error('Supabase getUsers error:', error)
-    throw error
+    throw error // Viderefører fejlen til den kaldende funktion
   }
 }
 
-// Fetch user by email and password for login
+// GET: Henter en bruger baseret på email og password
 export async function getUserByCredentials (email, password) {
   try {
     const response = await fetch(
-      `${url}?user_email=eq.${email}&user_password=eq.${password}`,
+      `${url}?user_email=eq.${email}&user_password=eq.${password}`, // Filter i URL'en
       {
         method: 'GET',
         headers: headersList
@@ -46,24 +49,24 @@ export async function getUserByCredentials (email, password) {
     }
 
     const data = await response.json()
-    return data.length > 0 ? data[0] : null // Return user if found, otherwise null
+    return data.length > 0 ? data[0] : null // Returnerer brugeren, hvis fundet, ellers null
   } catch (error) {
     console.error('Supabase getUserByCredentials error:', error)
     throw error
   }
 }
 
-// Create a new user
+// POST: Opretter en ny bruger
 export async function createUser (userData) {
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: 'POST', // HTTP POST-metode
       headers: headersList,
       body: JSON.stringify({
-        user_name: userData.user_name,
-        user_email: userData.user_email,
-        user_password: userData.user_password,
-        user_booking_id: userData.user_booking_id || null
+        user_name: userData.user_name, // Brugerens navn
+        user_email: userData.user_email, // Email
+        user_password: userData.user_password, // Password
+        user_booking_id: userData.user_booking_id || null // Booking-ID (valgfrit)
       })
     })
 
@@ -74,20 +77,20 @@ export async function createUser (userData) {
     }
 
     const data = await response.json()
-    return data
+    return data // Returnerer dataen om den oprettede bruger
   } catch (error) {
     console.error('Supabase createUser error:', error)
     throw error
   }
 }
 
-// Update user information (PATCH)
+// PATCH: Opdaterer en brugers information
 export async function updateUser (userId, updates) {
   try {
     const response = await fetch(`${url}?id=eq.${userId}`, {
-      method: 'PATCH',
+      method: 'PATCH', // HTTP PATCH-metode (partiel opdatering)
       headers: headersList,
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates) // De opdaterede felter
     })
 
     if (!response.ok) {
@@ -96,24 +99,24 @@ export async function updateUser (userId, updates) {
     }
 
     const data = await response.json()
-    return data
+    return data // Returnerer de opdaterede brugerdata
   } catch (error) {
     console.error('Supabase updateUser error:', error)
     throw error
   }
 }
 
-// Replace user information (PUT)
+// PUT: Erstatter en brugers information
 export async function replaceUser (userId, userData) {
   try {
     const response = await fetch(`${url}?id=eq.${userId}`, {
-      method: 'PUT',
+      method: 'PUT', // HTTP PUT-metode (fuld erstatning)
       headers: headersList,
       body: JSON.stringify({
-        user_name: userData.user_name,
-        user_email: userData.user_email,
-        user_password: userData.user_password,
-        user_booking_id: userData.user_booking_id
+        user_name: userData.user_name, // Brugerens navn
+        user_email: userData.user_email, // Email
+        user_password: userData.user_password, // Password
+        user_booking_id: userData.user_booking_id // Booking-ID
       })
     })
 
@@ -123,18 +126,18 @@ export async function replaceUser (userId, userData) {
     }
 
     const data = await response.json()
-    return data
+    return data // Returnerer de erstattede brugerdata
   } catch (error) {
     console.error('Supabase replaceUser error:', error)
     throw error
   }
 }
 
-// Delete a user
+// DELETE: Sletter en bruger
 export async function deleteUser (userId) {
   try {
     const response = await fetch(`${url}?id=eq.${userId}`, {
-      method: 'DELETE',
+      method: 'DELETE', // HTTP DELETE-metode
       headers: headersList
     })
 
@@ -143,7 +146,7 @@ export async function deleteUser (userId) {
       throw new Error(`Error deleting user: ${error.message}`)
     }
 
-    return { message: 'User deleted successfully.' }
+    return { message: 'User deleted successfully.' } // Returnerer en succes-besked
   } catch (error) {
     console.error('Supabase deleteUser error:', error)
     throw error

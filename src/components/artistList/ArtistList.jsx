@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useAuth } from "@/context/AuthContext"; // Import Auth Context
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import useLikedBandsStore from "@/stores/likedBandsStore";
 import BandSlider from "@/components/bandSlider/BandSlider";
 import {
@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input"; // Import Input component from Shadcn UI
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 
@@ -25,15 +26,14 @@ function getImageUrl(band) {
 }
 
 const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const { likedBands, addBand, removeBand, loadLikedBands } =
     useLikedBandsStore();
-  const { isLoggedIn } = useAuth(); // Get isLoggedIn from AuthContext
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
-    loadLikedBands(); // Load liked bands from localStorage
+    loadLikedBands();
   }, [loadLikedBands]);
-
-  const filteredBands = onlyLiked ? likedBands : bands;
 
   const isBandLiked = (slug) => likedBands.some((band) => band.slug === slug);
 
@@ -69,8 +69,25 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
     return bandSchedule;
   };
 
+  // Filter bands based on the search query
+  const filteredBands = (onlyLiked ? likedBands : bands).filter((band) =>
+    band.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <>
+      {/* Centered Search Bar */}
+      <div className="flex justify-center mb-6">
+        <div className="w-full max-w-2xl">
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for artists..."
+            className="w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:ring-primary focus:ring-2" // Adjust Shadcn styles
+          />
+        </div>
+      </div>
       {filteredBands.length === 0 ? (
         <p className="mt-6 text-lg text-center text-primary">
           {onlyLiked ? "No artists liked yet!" : "No artists found!"}
@@ -102,7 +119,6 @@ const ArtistList = ({ stages = [], bands = [], onlyLiked = false }) => {
                             No image available
                           </div>
                         )}
-                        {/* Conditionally render the like button */}
                         {isLoggedIn && (
                           <button
                             onClick={(e) => {

@@ -59,9 +59,7 @@ export default function LoginPage () {
         { name: 'Jotunheim', stageSchedule: mapGenresToSchedule(jotunheim) }
       ]
       setStages(stageData) // Opdaterer tilstanden med de bearbejdede data.
-    } catch (error) {
-      console.error('Error fetching liked artists:', error) // Logger fejl, hvis noget går galt.
-    }
+    } catch (error) {}
   }
 
   // Funktion til at vælge og vise den korrekte komponent baseret på `activeComponent`.

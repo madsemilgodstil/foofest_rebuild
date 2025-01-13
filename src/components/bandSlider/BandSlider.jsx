@@ -1,17 +1,18 @@
-"use client";
+"use client"; // Indikerer, at denne komponent kører på klient-siden i Next.js.
 
 import {
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
-import useLikedBandsStore from "@/stores/likedBandsStore";
-import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
+} from "@/components/ui/sheet"; // Importerer UI-komponenter til Sheet-layout.
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Avatar-komponenter til billedevisning.
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai"; // Hjerteikoner til like/unlike-funktionalitet.
+import useLikedBandsStore from "@/stores/likedBandsStore"; // Zustand store til håndtering af likede bands.
+import { useState } from "react"; // State hook fra React.
+import { useAuth } from "@/context/AuthContext"; // Importerer AuthContext for loginstatus.
 
-// Function to convert short day names to full day names
+// Funktion til at konvertere korte ugedagsnavne til fulde navne.
 function getFullDayName(shortDay) {
   const days = {
     mon: "Monday",
@@ -22,50 +23,60 @@ function getFullDayName(shortDay) {
     sat: "Saturday",
     sun: "Sunday",
   };
-  return days[shortDay] || shortDay; // Return original input if the day is not found
+  return days[shortDay] || shortDay; // Returnerer det originale input, hvis dagen ikke findes.
 }
 
+// BandSlider-komponenten til visning af banddetaljer.
 export default function BandSlider({ band, bandSchedule }) {
-  const { likedBands, addBand, removeBand } = useLikedBandsStore(); // Zustand hooks
-  const { isLoggedIn } = useAuth(); // Get login status from AuthContext
+  const { likedBands, addBand, removeBand } = useLikedBandsStore(); // Zustand hooks til likede bands.
+  const { isLoggedIn } = useAuth(); // Henter loginstatus fra AuthContext.
+  const [showFullBio, setShowFullBio] = useState(false); // State til "Read More"-funktionalitet.
 
+  // Henter bandets logo-URL eller returnerer `null`, hvis der ikke er noget logo.
   const imageUrl = band?.logo
     ? band.logo.startsWith("https://")
       ? band.logo
       : `${process.env.NEXT_PUBLIC_API_URL || ""}/logos/${band.logo}`
     : null;
 
-  // Check if the band is liked
+  // Tjekker, om bandet er liket.
   const isBandLiked = likedBands.some(
     (likedBand) => likedBand.slug === band.slug
   );
 
-  // Function to toggle like
+  // Funktion til at like/unlike et band.
   const toggleLike = () => {
     if (!isLoggedIn) {
-      alert("You must be logged in to like this band!"); // Notify user if not logged in
+      alert("You must be logged in to like this band!"); // Advarsel, hvis brugeren ikke er logget ind.
       return;
     }
     isBandLiked ? removeBand(band.slug) : addBand(band);
   };
 
+  // Funktion til at forkorte biografi.
+  const getShortBio = (bio) => {
+    const maxLength = 150; // Maksimalt antal tegn for kort version.
+    return bio.length > maxLength ? bio.substring(0, maxLength) + "..." : bio;
+  };
+
   return (
     <SheetContent
       className="flex flex-col p-6"
-      style={{ height: "100vh", maxHeight: "100vh" }}
+      style={{ height: "100vh", maxHeight: "100vh" }} // Sheet fylder hele viewport-højden.
     >
       <SheetHeader>
         <SheetTitle className="text-4xl font-bold text-primary">
-          {band?.name || "No Band Selected"}
+          {band?.name || "No Band Selected"}{" "}
+          {/* Bandets navn eller standardtekst. */}
         </SheetTitle>
 
-        {/* Like button below the title */}
+        {/* Like-knap under overskriften */}
         <button
           onClick={toggleLike}
           className={`mt-4 w-10 h-10 flex items-center justify-center rounded-full border-2 bg-black ${
             isBandLiked
-              ? "text-primary border-orange"
-              : "text-primary border-darkorange hover:border-orange"
+              ? "text-primary border-orange" // Style hvis bandet er liket.
+              : "text-primary border-darkorange hover:border-orange" // Style hvis bandet ikke er liket.
           } transition duration-200`}
         >
           {isBandLiked ? (
@@ -81,10 +92,10 @@ export default function BandSlider({ band, bandSchedule }) {
       </SheetHeader>
 
       <div className="flex-1 mt-4 space-y-4 overflow-y-auto">
-        {/* Band image */}
+        {/* Bandets billede */}
         <div className="py-4">
           {imageUrl ? (
-            <Avatar className="w-48 h-48">
+            <Avatar className="mx-auto w-60 h-60">
               <AvatarImage src={imageUrl} alt={band?.name || "Band"} />
               <AvatarFallback>{band?.name || "?"}</AvatarFallback>
             </Avatar>
@@ -93,12 +104,26 @@ export default function BandSlider({ band, bandSchedule }) {
           )}
         </div>
 
-        {/* Band description */}
+        {/* Bandets biografi */}
         <div className="my-2 text-lg">
-          {band?.bio || "Biography not available."}
+          {band?.bio ? (
+            <>
+              {showFullBio ? band.bio : getShortBio(band.bio)}
+              {band.bio.length > 150 && (
+                <button
+                  onClick={() => setShowFullBio((prev) => !prev)}
+                  className="ml-2 underline text-primary"
+                >
+                  {showFullBio ? "Read Less" : "Read More"}
+                </button>
+              )}
+            </>
+          ) : (
+            "Biography not available."
+          )}
         </div>
 
-        {/* Genre */}
+        {/* Bandets genre */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Genre:{" "}
@@ -106,7 +131,7 @@ export default function BandSlider({ band, bandSchedule }) {
           </h3>
         </div>
 
-        {/* Members */}
+        {/* Bandmedlemmer */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Members:{" "}
@@ -116,7 +141,7 @@ export default function BandSlider({ band, bandSchedule }) {
           </h3>
         </div>
 
-        {/* Schedule */}
+        {/* Bandets spilleplan */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Schedule:{" "}

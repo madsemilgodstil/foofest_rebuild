@@ -1,18 +1,17 @@
-"use client"; // Indikerer, at denne komponent kører på klient-siden i Next.js.
+"use client";
 
 import {
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/ui/sheet"; // Importerer UI-komponenter til Sheet-layout.
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Avatar-komponenter til billedevisning.
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai"; // Hjerteikoner til like/unlike-funktionalitet.
-import useLikedBandsStore from "@/stores/likedBandsStore"; // Zustand store til håndtering af likede bands.
-import { useState } from "react"; // State hook fra React.
-import { useAuth } from "@/context/AuthContext"; // Importerer AuthContext for loginstatus.
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import useLikedBandsStore from "@/stores/likedBandsStore";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
-// Funktion til at konvertere korte ugedagsnavne til fulde navne.
 function getFullDayName(shortDay) {
   const days = {
     mon: "Monday",
@@ -23,60 +22,106 @@ function getFullDayName(shortDay) {
     sat: "Saturday",
     sun: "Sunday",
   };
-  return days[shortDay] || shortDay; // Returnerer det originale input, hvis dagen ikke findes.
+  return days[shortDay] || shortDay;
 }
 
-// BandSlider-komponenten til visning af banddetaljer.
 export default function BandSlider({ band, bandSchedule }) {
-  const { likedBands, addBand, removeBand } = useLikedBandsStore(); // Zustand hooks til likede bands.
-  const { isLoggedIn } = useAuth(); // Henter loginstatus fra AuthContext.
-  const [showFullBio, setShowFullBio] = useState(false); // State til "Read More"-funktionalitet.
+  const { likedBands, addBand, removeBand } = useLikedBandsStore();
+  const { isLoggedIn } = useAuth();
+  const [showFullBio, setShowFullBio] = useState(false);
+  const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState(""); // Spotify player embed URL
 
-  // Henter bandets logo-URL eller returnerer `null`, hvis der ikke er noget logo.
   const imageUrl = band?.logo
     ? band.logo.startsWith("https://")
       ? band.logo
       : `${process.env.NEXT_PUBLIC_API_URL || ""}/logos/${band.logo}`
     : null;
 
-  // Tjekker, om bandet er liket.
   const isBandLiked = likedBands.some(
     (likedBand) => likedBand.slug === band.slug
   );
 
-  // Funktion til at like/unlike et band.
   const toggleLike = () => {
     if (!isLoggedIn) {
-      alert("You must be logged in to like this band!"); // Advarsel, hvis brugeren ikke er logget ind.
+      alert("You must be logged in to like this band!");
       return;
     }
     isBandLiked ? removeBand(band.slug) : addBand(band);
   };
 
-  // Funktion til at forkorte biografi.
   const getShortBio = (bio) => {
-    const maxLength = 150; // Maksimalt antal tegn for kort version.
+    const maxLength = 150;
     return bio.length > maxLength ? bio.substring(0, maxLength) + "..." : bio;
   };
+
+  // Fetch Spotify data for the band
+  useEffect(() => {
+    const fetchSpotifyData = async () => {
+      if (!band?.name) return;
+
+      try {
+        const clientId = "f363ca326bce47dd906f8ed0c009f614"; // Your Spotify Client ID
+        const clientSecret = "b5391d7518a241bb9fecba7e64b7dd04"; // Your Spotify Client Secret
+
+        // Fetch Spotify Access Token
+        const tokenResponse = await fetch(
+          "https://accounts.spotify.com/api/token",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+            },
+            body: "grant_type=client_credentials",
+          }
+        );
+
+        const tokenData = await tokenResponse.json();
+        const token = tokenData.access_token;
+
+        // Search for the artist
+        const response = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+            band.name
+          )}&type=artist&limit=1`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        const artist = data.artists?.items[0];
+
+        if (artist) {
+          setSpotifyEmbedUrl(
+            `https://open.spotify.com/embed/artist/${artist.id}`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching Spotify data:", error);
+      }
+    };
+
+    fetchSpotifyData();
+  }, [band?.name]);
 
   return (
     <SheetContent
       className="flex flex-col p-6"
-      style={{ height: "100vh", maxHeight: "100vh" }} // Sheet fylder hele viewport-højden.
+      style={{ height: "100vh", maxHeight: "100vh" }}
     >
       <SheetHeader>
         <SheetTitle className="text-4xl font-bold text-primary">
-          {band?.name || "No Band Selected"}{" "}
-          {/* Bandets navn eller standardtekst. */}
+          {band?.name || "No Band Selected"}
         </SheetTitle>
 
-        {/* Like-knap under overskriften */}
         <button
           onClick={toggleLike}
           className={`mt-4 w-10 h-10 flex items-center justify-center rounded-full border-2 bg-black ${
             isBandLiked
-              ? "text-primary border-orange" // Style hvis bandet er liket.
-              : "text-primary border-darkorange hover:border-orange" // Style hvis bandet ikke er liket.
+              ? "text-primary border-orange"
+              : "text-primary border-darkorange hover:border-orange"
           } transition duration-200`}
         >
           {isBandLiked ? (
@@ -92,7 +137,6 @@ export default function BandSlider({ band, bandSchedule }) {
       </SheetHeader>
 
       <div className="flex-1 mt-4 space-y-4 overflow-y-auto">
-        {/* Bandets billede */}
         <div className="py-4">
           {imageUrl ? (
             <Avatar className="mx-auto w-60 h-60">
@@ -104,7 +148,6 @@ export default function BandSlider({ band, bandSchedule }) {
           )}
         </div>
 
-        {/* Bandets biografi */}
         <div className="my-2 text-lg">
           {band?.bio ? (
             <>
@@ -123,7 +166,6 @@ export default function BandSlider({ band, bandSchedule }) {
           )}
         </div>
 
-        {/* Bandets genre */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Genre:{" "}
@@ -131,7 +173,6 @@ export default function BandSlider({ band, bandSchedule }) {
           </h3>
         </div>
 
-        {/* Bandmedlemmer */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Members:{" "}
@@ -141,7 +182,6 @@ export default function BandSlider({ band, bandSchedule }) {
           </h3>
         </div>
 
-        {/* Bandets spilleplan */}
         <div className="font-semibold text-white">
           <h3 className="mb-2 text-sm font-bold text-primary">
             Schedule:{" "}
@@ -160,6 +200,20 @@ export default function BandSlider({ band, bandSchedule }) {
             )}
           </h3>
         </div>
+
+        {/* Spotify embedded player */}
+        {spotifyEmbedUrl && (
+          <div className="mt-6">
+            <iframe
+              src={spotifyEmbedUrl}
+              width="100%"
+              height="380"
+              frameBorder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              className="rounded-lg"
+            ></iframe>
+          </div>
+        )}
       </div>
     </SheetContent>
   );
